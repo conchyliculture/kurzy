@@ -11,6 +11,7 @@ require 'rack/test'
 
 class TestClasse < Test::Unit::TestCase
     require "json"
+    require "nokogiri"
     include Rack::Test::Methods
 
     def app
@@ -24,6 +25,7 @@ class TestClasse < Test::Unit::TestCase
     end
 
     def testGetShortFail()
+        KurzyDB.truncate()
         get '/fail'
         assert last_response.ok?
         assert last_response.body.include?("Kurzy - URL shortener")
@@ -35,35 +37,119 @@ class TestClasse < Test::Unit::TestCase
     end
 
     def testAdd()
-        rand = KurzyDB.gen_hash(3)
-        post '/a', params={"lsturl"=> "https://twitter.com", "lsturl-custom"=>rand}
+        KurzyDB.truncate()
+        rand3 = KurzyDB.gen_hash(3)
+        url = "https://twitter.com"
+        post '/a', params={"lsturl"=> url, "lsturl-custom"=>rand3}
         assert last_response.ok?
-        assert_equal last_response.body, "Successfully added short link <a href=\"https://twitter.com\">#{rand}</>"
+        assert_equal last_response.body, "Successfully added short link <a href=\"#{url}\">#{rand3}</>"
+
+        get '/list?format=json'
+        assert last_response.ok?
+        table = JSON.parse(last_response.body)["list"]
+        assert_equal 0, table[0]["counter"]
+
+        (0..5).each do |i|
+            get "/#{rand3}"
+            assert last_response.redirect?
+            assert_equal last_response.body, ""
+            assert_equal last_response.header["Location"], url
+        end
+
+        get '/list?format=json'
+        assert last_response.ok?
+        table = JSON.parse(last_response.body)["list"]
+        assert_equal 6, table[0]["counter"]
     end
 
     def testAddJson()
-        rand = KurzyDB.gen_hash(3)
-        post '/a', params={"lsturl"=> "https://twitter.com", "lsturl-custom"=>rand, "format"=>"json"}
-        pp last_response
+        KurzyDB.truncate()
+        rand3 = KurzyDB.gen_hash(3)
+        url = "htps://twitter.com"
+        post '/a', params={"lsturl"=> url, "lsturl-custom"=>rand3, "format"=>"json"}
         assert last_response.ok?
-        assert_equal JSON.parse(last_response.body), {"success" => true, "url" => "https://twitter.com", "short" => rand}
+        assert_equal JSON.parse(last_response.body), {"success" => true, "url" => url, "short" => rand3}
+
+        get "/#{rand3}"
+        assert last_response.redirect?
+        assert_equal last_response.body, ""
+        assert_equal last_response.header["Location"], url
     end
 
     def testAddTwice()
-        rand = KurzyDB.gen_hash(3)
-        post '/a', params={"lsturl"=> "https://twitter.com", "lsturl-custom"=>rand}
-        post '/a', params={"lsturl"=> "https://twitter.com", "lsturl-custom"=>rand}
+        KurzyDB.truncate()
+        rand3 = KurzyDB.gen_hash(3)
+        post '/a', params={"lsturl"=> "https://twitter.com", "lsturl-custom"=>rand3}
+        post '/a', params={"lsturl"=> "https://twitter.com", "lsturl-custom"=>rand3}
         assert last_response.ok?
-        assert_equal "Error adding short link: 'The short url #{rand} already exists'", last_response.body
+        assert_equal "Error adding short link: 'The short url #{rand3} already exists'", last_response.body
     end
 
     def testAddTwiceJson()
-        rand = KurzyDB.gen_hash(3)
-        post '/a', params={"lsturl"=> "https://twitter.com", "lsturl-custom"=>rand}
-        post '/a', params={"lsturl"=> "https://twitter.com", "lsturl-custom"=>rand, "format"=>"json"}
+        KurzyDB.truncate()
+        rand3 = KurzyDB.gen_hash(3)
+        post '/a', params={"lsturl"=> "https://twitter.com", "lsturl-custom"=>rand3}
+        post '/a', params={"lsturl"=> "https://twitter.com", "lsturl-custom"=>rand3, "format"=>"json"}
         assert last_response.bad_request?
-        assert_equal({"msg"=> "The short url #{rand} already exists", "success" => false},  JSON.parse(last_response.body))
+        assert_equal({"msg"=> "The short url #{rand3} already exists", "success" => false},  JSON.parse(last_response.body))
     end
 
+    def testDelete()
+        KurzyDB.truncate()
+        url = "https://twitter.com"
+        rand3 = KurzyDB.gen_hash(3)
+        get "/d/#{rand3}"
+        assert last_response.ok?
+        assert_equal "Error deleting short link: 'The short url #{rand3} doesn&#39;t exist'", last_response.body
+
+        post '/a', params={"lsturl"=> "https://twitter.com", "lsturl-custom"=>rand3}
+        assert last_response.ok?
+        assert_equal last_response.body, "Successfully added short link <a href=\"#{url}\">#{rand3}</>"
+
+        get "/#{rand3}"
+        assert last_response.redirect?
+        assert_equal last_response.body, ""
+        assert_equal last_response.header["Location"], url
+
+        get "/d/#{rand3}"
+        assert last_response.ok?
+        assert_equal "Deleted #{rand3}", last_response.body
+
+        get "/#{rand3}"
+        assert last_response.ok?
+        assert last_response.body.include?("Kurzy - URL shortener")
+        assert last_response.body.include?("value=\"#{rand3}\"")
+    end
+
+    def testList()
+        KurzyDB.truncate()
+        rands = [KurzyDB.gen_hash(3), KurzyDB.gen_hash(3), KurzyDB.gen_hash(3)]
+        urls = ["https://twitter.com/#{rands[0]}", "https://twitter.com/#{rands[1]}", "https://twitter.com/#{rands[2]}"]
+        rands.each_with_index do |r, i|
+            if r == rands[2]
+                post '/a',  params={"lsturl"=> urls[i], "lsturl-custom"=>rands[i], "lsturl-private" => "on"} 
+            else
+                post '/a',  params={"lsturl"=> urls[i], "lsturl-custom"=>rands[i]} 
+            end
+        end
+
+        get '/list'
+        assert last_response.ok?
+        table = Nokogiri::HTML.parse(last_response.body).css('tbody tr')
+        assert_equal 2, table.size()
+        (0..1).each do |i|
+            assert_equal(rands[i], table[i].css('td')[1].text)
+            assert_equal(urls[i], table[i].css('td')[2].text)
+        end
+
+        get '/list?format=json'
+        assert last_response.ok?
+        table = JSON.parse(last_response.body)["list"]
+        assert_equal 2, table.size()
+        (0..1).each do |i|
+            assert_equal(rands[i], table[i]['short'])
+            assert_equal(urls[i], table[i]['url'])
+        end
+    end
 
 end

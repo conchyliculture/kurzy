@@ -10,13 +10,9 @@ set :bind, "0.0.0.0"
 Encoding.default_external = Encoding::UTF_8
 Encoding.default_internal = Encoding::UTF_8
 
-
-before do
-end
-
-def add(url:url, short: short)
+def add(url:, short:, priv: true)
     begin
-        return {success: true, url: url, short: KurzyDB.add(short:short, url:url)}
+        return {success: true, url: url, short: KurzyDB.add(short:short, url:url, priv: priv)}
     rescue KurzyDB::Error =>  e
         message = e.message 
         return {msg: message, success: false}
@@ -24,22 +20,36 @@ def add(url:url, short: short)
 end
 
 def delete(short:)
-    res = KurzyDB.delete(short: s)
-    res[:success] = true
-    return res
+    begin
+        res = KurzyDB.delete(short: short)
+        res[:success] = true
+        pp res
+        return res
+    rescue KurzyDB::Error => e
+        message = e.message 
+        return {msg: message, success: false}
+    end
 end
 
 def get(short:)
     return KurzyDB.get_url(short: short)
 end
 
+def get_list(max: nil, priv: false)
+    res={}
+    res[:list] = KurzyDB.list(max: max, priv: priv)
+    res[:success] = true
+    return res
+end
+
 
 post '/a' do
     kurl = params['lsturl']
     kurl_custom = params['lsturl-custom']
+    kurl_private = params['lsturl-private']
     format = params['format']
     
-    @res = add(url:kurl, short: kurl_custom)
+    @res = add(url:kurl, short: kurl_custom, priv: kurl_private == "on")
     
     if format == 'json'
         content_type 'application/json'
@@ -47,6 +57,34 @@ post '/a' do
         return @res.to_json
     else
         slim :add
+    end
+end
+
+get '/list' do
+    format = params[:format]
+    @liste = get_list()
+    if format == 'json'
+        content_type 'application/json'
+        return @liste.to_json
+    else
+        slim :list
+    end
+end
+
+get '/d/*' do |shortened_url|
+    format = params['format']
+    @deleted = delete(short: shortened_url)
+
+    if format == 'json'
+        content_type 'application/json'
+        if @deleted[:success]
+            @deleted.to_json
+        else
+            status 400
+            {success: false, msg: @error}
+        end
+    else
+        slim :delete
     end
 end
 
@@ -72,28 +110,5 @@ get '/*' do |shortened_url|
             @short = shortened_url
             slim :main
         end
-    end
-end
-
-get '/d/*' do |shortened_url|
-    format = params['format']
-    @error = nil
-
-    begin
-        @deleted = delete(short: short)
-    rescue Sequel::Error => e
-        @error = e.message
-    end
-
-    if format == 'json'
-        content_type 'application/json'
-        if @error
-            status 400
-            {success: false, msg: @error}
-        else
-            @deleted.to_json
-        end
-    else
-        slim :delete
     end
 end
