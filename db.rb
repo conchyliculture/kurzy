@@ -1,9 +1,16 @@
 module KurzyDB
     require "logger"
     require "sequel"
+
     Sequel::Model.plugin(:schema) 
+
     if not Object.const_defined?(:DB)
-        DB = Sequel.sqlite 'db/kurzy.sqlite', :loggers => [Logger.new($stderr)]
+        case ENV['RACK_ENV']
+        when "test"
+            DB = Sequel.sqlite
+        else
+            DB = Sequel.sqlite 'db/kurzy.sqlite', :loggers => [Logger.new($stderr)]
+        end
     end
 
     class Error < Exception
@@ -20,8 +27,9 @@ module KurzyDB
         create_table unless table_exists?
     end
 
-    def KurzyDB.add(url:nil , short: nil)
+    def KurzyDB.add(url:, short:nil)
         return unless url
+
         s = short
         unless s
             s = KurzyDB.gen_hash()
@@ -36,14 +44,20 @@ module KurzyDB
                 KurzyDB.insert(url: url, short: s)
             end
         end
-        return short
+        return s
+    end
+
+    def KurzyDB.delete(short:)
+        row = KurzyDB.where(short: short)
+        row.delete()
+        return row.to_hash
     end
 
     def KurzyDB.gen_hash(length=6)
         temp_hash = [*'a'..'h', 'j', 'k', *'m'..'z', *'A'..'H', *'J'..'N', *'P'..'Z', *'0'..'9', '-', '_'].sample(length).join();
     end
 
-    def KurzyDB.get_url(short)
+    def KurzyDB.get_url(short:)
         $stderr.puts KURL.where(short: short).sql
         res =  KURL.where(short: short).first()
         if res

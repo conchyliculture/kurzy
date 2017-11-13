@@ -14,7 +14,7 @@ Encoding.default_internal = Encoding::UTF_8
 before do
 end
 
-def add_kurzy(url:url, short: short)
+def add(url:url, short: short)
     begin
         return {success: true, url: url, short: KurzyDB.add(short:short, url:url)}
     rescue KurzyDB::Error =>  e
@@ -23,8 +23,14 @@ def add_kurzy(url:url, short: short)
     end
 end
 
-def get_url(s)
-    return KurzyDB.get_url(s)
+def delete(short:)
+    res = KurzyDB.delete(short: s)
+    res[:success] = true
+    return res
+end
+
+def get(short:)
+    return KurzyDB.get_url(short: short)
 end
 
 
@@ -33,10 +39,11 @@ post '/a' do
     kurl_custom = params['lsturl-custom']
     format = params['format']
     
-    @res = add_kurzy(url:kurl, short:kurl_custom)
+    @res = add(url:kurl, short: kurl_custom)
     
     if format == 'json'
         content_type 'application/json'
+        status 400 unless @res[:success]
         return @res.to_json
     else
         slim :add
@@ -46,7 +53,7 @@ end
 get '/*.json' do |shortened_url|
     content_type 'application/json'
     begin
-        url = get_url(shortened_url)
+        url = get(short: shortened_url)
     rescue KurzyDB::Error => e
         return {msg: e.message, success: false}
     end
@@ -58,12 +65,35 @@ get '/*' do |shortened_url|
     if shortened_url == ""
         slim :main
     else
-        dest_url = get_url(shortened_url)
+        dest_url = get(short: shortened_url)
         if dest_url
             redirect to(dest_url), 301
         else
             @short = shortened_url
             slim :main
         end
+    end
+end
+
+get '/d/*' do |shortened_url|
+    format = params['format']
+    @error = nil
+
+    begin
+        @deleted = delete(short: short)
+    rescue Sequel::Error => e
+        @error = e.message
+    end
+
+    if format == 'json'
+        content_type 'application/json'
+        if @error
+            status 400
+            {success: false, msg: @error}
+        else
+            @deleted.to_json
+        end
+    else
+        slim :delete
     end
 end
