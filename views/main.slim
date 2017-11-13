@@ -1,0 +1,28 @@
+doctype html
+html
+  head
+    title
+      |Kurzy
+    link type="text/css" rel="stylesheet" href="/materialize/css/materialize.min.css"  media="screen,projection"
+    script src="/jquery-3.2.1.min.js"
+    script src="/materialize/js/materialize.min.js"
+  body
+    div class="container"
+      h1
+        |Kurzy - URL shortener
+      div class="row"
+        form class="col s12" action="/a" method="post"
+          div class="input-field col s6"
+            label class="sr-only" for="lsturl"
+              |URL to shorten
+            input type="url" name="lsturl" id="lsturl" placeholder="https://twitter.com" required=true
+          div class="input-field col s6"
+            label class="sr-only" for="lsturl-custom"
+              |Custom shortened text
+            -if @short 
+              input type="text" name="lsturl-custom" id="lsturl-custom" placeholder="twitter" value="#{@short}"
+            -else
+              input type="text" name="lsturl-custom" id="lsturl-custom" placeholder="twitter"
+
+          button class="btn waves-effect waves-light" type="submit" name="action"
+            |Submit
