@@ -6,7 +6,7 @@ Just your simple URL shortener.
 
 Inspired by [lstu.fr](http://lstu.fr), because, srsly, perl?
 
-## Install & Run
+## Install and Run
 
 ```
 apt install ruby-slim ruby-sequel ruby-sinatra
@@ -15,8 +15,8 @@ cd kurzy
 ruby kurzy.rb
 ```
 
-and navigate to http://localhost:4567
+and navigate to http://localhost:4567 that's it.
 
-## Security
+## Security
 
 Nope.
