@@ -8,15 +8,10 @@ require "sinatra"
 
 require_relative "db.rb"
 
+$adminpwd = "toto"
+
 set :bind, "0.0.0.0"
-case ENV['RACK_ENV']
-when "test"
-    $base_url = "http://localhost:4567/"
-    $adminpwd = "toto"
-else
-    $base_url = "http://goto.ninja/"
-    $adminpwd = "toto"
-end
+
 use Rack::Session::Cookie,  :key => 'rack.session',
                         :path => '/',
                         :expire_after => 86400*2,#Inseconds
@@ -24,7 +19,6 @@ use Rack::Session::Cookie,  :key => 'rack.session',
 
 Encoding.default_external = Encoding::UTF_8
 Encoding.default_internal = Encoding::UTF_8
-
 
 def nay(msg)
     status 400
@@ -80,17 +74,12 @@ def get_list(max: nil, priv: false)
     return res
 end
 
-def stats(priv:false)
-
-end
-
-
 post '/a' do
     kurl = params['url']
     kurl_custom = params['shorturl']
     kurl_private = params['privateurl']
     @res = add(url:kurl, short: kurl_custom, priv: kurl_private == "true")
-    
+
     content_type 'application/json'
     status 400 unless @res[:success]
     return @res.to_json
@@ -103,18 +92,12 @@ get '/list' do
 end
 
 get '/d/*' do |shortened_url|
-    format = params['format']
     @deleted = delete(short: shortened_url)
-
-    if format == 'json'
-        content_type 'application/json'
-        if not @deleted[:success]
-            status 400
-        end
-        @deleted.to_json
-    else
-        slim :delete
+    content_type 'application/json'
+    if not @deleted[:success]
+        status 400
     end
+    @deleted.to_json
 end
 
 post '/login' do

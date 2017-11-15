@@ -2,7 +2,7 @@ module KurzyDB
     require "logger"
     require "sequel"
 
-    Sequel::Model.plugin(:schema) 
+    Sequel::Model.plugin(:schema)
 
     if not Object.const_defined?(:DB)
         case ENV['RACK_ENV']

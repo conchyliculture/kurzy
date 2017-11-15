@@ -1,2 +1,2 @@
-require "./kurzy"                                                                                                                     
+require "./kurzy"
 run Sinatra::Application

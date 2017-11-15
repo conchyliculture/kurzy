@@ -9,10 +9,26 @@ html
     script src="/kurzy.js"
   body
     div class="container" style="margin-top:1em"
+      div id="aboutmodal" class="modal"
+        div class="modal-content"
+          h4
+            |About
+          p
+            |Just a simple URL shortener, inspired by <a href="http://lstu.fr">LSTU</a>.
+          p
+            ul
+              li
+                a href="https://github.com/conchyliculture/kurzy"
+                  |Code on Github
+        div class="modal-footer"
+          a class="btn-flat modal-action modal-close waves-effect waves-light"
+            |OK!
       div id="loginmodal" class="modal"
         div class="modal-content"
           h4
             |Login
+          p
+            |This allows you to list private short URLs and delete them.
           form action="/login" method="post" id="loginform"
             div class="row"
               div class="input-field col s4"
@@ -23,10 +39,6 @@ html
               div class="col s4"
                 button class="btn waves-effect waves-light modal-action modal-close" type="submit" name="action-login"
                     |Submit
-
-        div class="modal-footer"
-          a class="btn-flat modal-action modal-close waves-effect waves-light"
-            |Cancel
 
       nav class="nav-extended"
         div class="nav-wrapper"
@@ -39,8 +51,8 @@ html
               a class="modal-trigger" href="#loginmodal" id="logindiv"
                 |Login
             li
-              a href="#"
-                |about
+              a class="modal-trigger" href="#aboutmodal"
+                |About
         div class="nav-content"
           ul class="tabs"
             li class="tab col s3"
@@ -59,10 +71,10 @@ html
             div class="input-field col s4"
               label class="sr-only" for="shorturlfield" data-error="Already in use"
                 |Custom shortened text
-              -if @short 
+              -if @short
                 input type="text" id="shorturlfield" placeholder="twitter" class="validate" value="#{@short}"
               -else
-                input type="text" id="shorturlfield" placeholder="twitter" class="validate"  
+                input type="text" id="shorturlfield" placeholder="twitter" class="validate"
             div class="input-field col s4 tooltipped"  data-position="bottom" data-delay="50" data-tooltip="Whether to show the link in the list"
               input type="checkbox" id="privatefield"
               label for="privatefield"
