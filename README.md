@@ -18,7 +18,10 @@ change the `$adminpwd` value to something sensible.
 ruby kurzy.rb
 ```
 
-and navigate to http://localhost:4567 that's it.
+and navigate to http://localhost:4567 .
+
+![Screenshot](doc/sc1.png?raw=true "Kurzy")
+
 
 Add new links there, for example shortlink `t` for `https://twitter.com/africabytotobot`.
 Now you can navigate to `http://localhost:4567/t` to be redirected to `https://twitter.com/africabytotobot`
