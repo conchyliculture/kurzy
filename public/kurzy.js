@@ -55,7 +55,7 @@ function delete_short(s) {
 function load_liste() {
     $.ajax({
         type: "GET",
-        url: "/list",
+        url: "/l/list",
         dataType: "json",
         success: function (data, s) {
             show_liste(data['list']);
@@ -74,13 +74,13 @@ function kurzy_add(e){
     var surl = $('#shorturlfield').val();
     var privateurl = $('#privatefield').is(":checked");
     $.ajax({
-        url: "/a",
+        url: "/a/add",
         type: "POST",
         dataType: "json",
         data: {'url': url, 'shorturl': surl, 'privateurl': privateurl},
         success: function(res, textStatus) {
             Materialize.toast('Successfull added link', 4000);
-            console.log(res);
+            load_liste();
             var link = document.location.origin+'/'+res['short'];
             $('#add_result').html('<div class="col s12">Successfully added short link <a href="'+link+'">'+link+'</a></div>');
         },
@@ -95,7 +95,7 @@ function kurzy_add(e){
 
 function kurzy_logout(e) {
     $.ajax({
-        url: "/logout",
+        url: "/l/logout",
         type: "GET",
         success: function(data, textStatus) {
             load_liste();
@@ -112,7 +112,7 @@ function kurzy_login(e) {
     e.preventDefault();
     var pwd = $('#password').val();
     $.ajax({
-        url: "/login",
+        url: "/l/login",
         type: "POST",
         dataType: "json",
         data: {'password': pwd},

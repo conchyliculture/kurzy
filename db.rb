@@ -1,5 +1,4 @@
 module KurzyDB
-    require "logger"
     require "sequel"
 
     Sequel::Model.plugin(:schema)
@@ -9,7 +8,7 @@ module KurzyDB
         when "test"
             DB = Sequel.sqlite
         else
-            DB = Sequel.sqlite 'db/kurzy.sqlite', :loggers => [Logger.new($stderr)]
+            DB = Sequel.sqlite 'db/kurzy.sqlite'
         end
     end
 

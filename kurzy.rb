@@ -67,14 +67,13 @@ def get(short:)
 end
 
 def get_list(max: nil, priv: false)
-    $stderr.puts("get_list #{priv}")
     res={}
     res[:list] = KurzyDB.list(max: max, priv: priv)
     res[:success] = true
     return res
 end
 
-post '/a' do
+post '/add' do
     kurl = params['url']
     kurl_custom = params['shorturl']
     kurl_private = params['privateurl']
@@ -85,7 +84,7 @@ post '/a' do
     return @res.to_json
 end
 
-get '/list' do
+get '/l/list' do
     @liste = get_list(priv: session["logged"])
     content_type 'application/json'
     return @liste.to_json
@@ -100,7 +99,7 @@ get '/d/*' do |shortened_url|
     @deleted.to_json
 end
 
-post '/login' do
+post '/l/login' do
     pwd = params[:password]
     if pwd
         if pwd == $adminpwd
@@ -114,7 +113,7 @@ post '/login' do
     end
 end
 
-get '/logout' do
+get '/l/logout' do
     content_type 'application/json'
     if session["logged"]
         session["logged"] = false
@@ -139,6 +138,7 @@ get '/*' do |shortened_url|
         if res[:success]
             redirect to(res[:url]), 301
         else
+            status 200
             @short = shortened_url
             slim :main
         end

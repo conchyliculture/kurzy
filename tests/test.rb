@@ -1,8 +1,6 @@
 #!/usr/bin/ruby
 # encoding: utf-8
 
-require "pp"
-
 ENV['RACK_ENV'] = 'test'
 
 require_relative '../kurzy.rb'
@@ -21,52 +19,26 @@ class TestClasse < Test::Unit::TestCase
     def testIndex()
         get '/'
         assert last_response.ok?
-        assert last_response.body.include?("Kurzy - URL shortener")
+        assert last_response.body.include?("title>Kurzy")
     end
 
     def testGetShortFail()
         KurzyDB.truncate()
         get '/fail'
         assert last_response.ok?
-        assert last_response.body.include?("Kurzy - URL shortener")
+        assert last_response.body.include?("title>Kurzy")
         assert last_response.body.include?("value=\"fail\"")
 
         get '/fail', params = {"format" => "json"}
-        assert last_response.ok?
+        assert_equal last_response.status, 400
         assert_equal JSON.parse(last_response.body), {"msg" => "No such short url: 'fail'", "success" => false}
-    end
-
-    def testAdd()
-        KurzyDB.truncate()
-        rand3 = KurzyDB.gen_hash(3)
-        url = "https://twitter.com"
-        post '/a', params={"lsturl"=> url, "lsturl-custom"=>rand3}
-        assert last_response.ok?
-        assert_equal({"short"=>rand3, "success"=>true, "url"=>url}, JSON.parse(last_response.body))
-
-        get '/list'
-        assert last_response.ok?
-        table = JSON.parse(last_response.body)["list"]
-        assert_equal 0, table[0]["counter"]
-
-        (0..5).each do |i|
-            get "/#{rand3}"
-            assert last_response.redirect?
-            assert_equal last_response.body, ""
-            assert_equal last_response.header["Location"], url
-        end
-
-        get '/list?format=json'
-        assert last_response.ok?
-        table = JSON.parse(last_response.body)["list"]
-        assert_equal 6, table[0]["counter"]
     end
 
     def testAddJson()
         KurzyDB.truncate()
         rand3 = KurzyDB.gen_hash(3)
         url = "htps://twitter.com"
-        post '/a', params={"lsturl"=> url, "lsturl-custom"=>rand3, "format"=>"json"}
+        post '/add', params={"url"=> url, "shorturl"=>rand3}
         assert last_response.ok?
         assert_equal JSON.parse(last_response.body), {"success" => true, "url" => url, "short" => rand3}
 
@@ -76,21 +48,11 @@ class TestClasse < Test::Unit::TestCase
         assert_equal last_response.header["Location"], url
     end
 
-    def testAddTwice()
-        KurzyDB.truncate()
-        rand3 = KurzyDB.gen_hash(3)
-        post '/a', params={"lsturl"=> "https://twitter.com", "lsturl-custom"=>rand3}
-        assert last_response.ok?
-        post '/a', params={"lsturl"=> "https://twitter.com", "lsturl-custom"=>rand3}
-        assert ! last_response.ok?
-        assert_equal({"success" => false, "msg" => "The short url #{rand3} already exists"}, JSON.parse(last_response.body))
-    end
-
     def testAddTwiceJson()
         KurzyDB.truncate()
         rand3 = KurzyDB.gen_hash(3)
-        post '/a', params={"lsturl"=> "https://twitter.com", "lsturl-custom"=>rand3}
-        post '/a', params={"lsturl"=> "https://twitter.com", "lsturl-custom"=>rand3, "format"=>"json"}
+        post '/add', params={"url"=> "https://twitter.com", "shorturl"=>rand3}
+        post '/add', params={"url"=> "https://twitter.com", "shorturl"=>rand3}
         assert last_response.bad_request?
         assert_equal({"msg"=> "The short url #{rand3} already exists", "success" => false},  JSON.parse(last_response.body))
     end
@@ -100,23 +62,25 @@ class TestClasse < Test::Unit::TestCase
         KurzyDB.truncate()
         url = "https://twitter.com"
         rand3 = KurzyDB.gen_hash(3)
-        b.get "/d/#{rand3}"
-        assert b.last_response.ok?
-        assert_equal "Error deleting short link: 'You are not allowed to perform this action'", b.last_response.body
-        b.get "/d/#{rand3}",  {'rack.session' =>  { :logged => true } }
-        assert b.last_response.ok?
-        assert_equal "Error deleting short link: 'You are not allowed to perform this action'", b.last_response.body
 
-        b.post '/a', params={"lsturl"=> "https://twitter.com", "lsturl-custom"=>rand3}
+        b.post '/add', params={"url"=> url, "shorturl"=>rand3}
         assert b.last_response.ok?
-        assert_equal JSON.parse(b.last_response.body), {"short"=>rand3, "success"=>true, "url"=>"https://twitter.com"}
-        b.get "/d/#{rand3}", {'rack.session' =>  { :logged => true } }
-        assert b.last_response.ok?
-        assert_equal "Error deleting short link: 'You are not allowed to perform this action'", b.last_response.body
         b.get "/#{rand3}"
         assert b.last_response.redirect?
         assert_equal b.last_response.body, ""
         assert_equal b.last_response.header["Location"], url
+
+        b.get "/d/#{rand3}"
+        assert_equal b.last_response.status, 400
+        assert_equal({"msg" => "You are not allowed to perform this action", "success" => false}, JSON.parse(b.last_response.body))
+
+        b.get "/d/#{rand3}", {}, "rack.session" => {"logged" => true}
+        assert b.last_response.ok?
+        assert JSON.parse(b.last_response.body)["success"]
+        assert_equal rand3, JSON.parse(b.last_response.body)["short"]
+        b.get "/#{rand3}"
+        assert b.last_response.ok?
+        assert b.last_response.body.include?("value=\"#{rand3}\"")
     end
 
     def testList()
@@ -125,15 +89,14 @@ class TestClasse < Test::Unit::TestCase
         urls = ["https://twitter.com/#{rands[0]}", "https://twitter.com/#{rands[1]}", "https://twitter.com/#{rands[2]}"]
         rands.each_with_index do |r, i|
             if r == rands[2]
-                post '/a',  params={"lsturl"=> urls[i], "lsturl-custom"=>rands[i], "lsturl-private" => "on"}
+                post '/add',  params={"url"=> urls[i], "shorturl"=>rands[i], "privateurl" => "true"}
             else
-                post '/a',  params={"lsturl"=> urls[i], "lsturl-custom"=>rands[i]}
+                post '/add',  params={"url"=> urls[i], "shorturl"=>rands[i]}
             end
         end
 
-        get '/list'
+        get '/l/list'
         assert last_response.ok?
-        pp last_response.body
         table = JSON.parse(last_response.body)["list"]
         assert_equal 2, table.size()
         (0..1).each do |i|
