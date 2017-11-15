@@ -38,7 +38,7 @@ class TestClasse < Test::Unit::TestCase
         KurzyDB.truncate()
         rand3 = KurzyDB.gen_hash(3)
         url = "htps://twitter.com"
-        post '/add', params={"url"=> url, "shorturl"=>rand3}
+        post '/a/add', params={"url"=> url, "shorturl"=>rand3}
         assert last_response.ok?
         assert_equal JSON.parse(last_response.body), {"success" => true, "url" => url, "short" => rand3}
 
@@ -51,8 +51,8 @@ class TestClasse < Test::Unit::TestCase
     def testAddTwiceJson()
         KurzyDB.truncate()
         rand3 = KurzyDB.gen_hash(3)
-        post '/add', params={"url"=> "https://twitter.com", "shorturl"=>rand3}
-        post '/add', params={"url"=> "https://twitter.com", "shorturl"=>rand3}
+        post '/a/add', params={"url"=> "https://twitter.com", "shorturl"=>rand3}
+        post '/a/add', params={"url"=> "https://twitter.com", "shorturl"=>rand3}
         assert last_response.bad_request?
         assert_equal({"msg"=> "The short url #{rand3} already exists", "success" => false},  JSON.parse(last_response.body))
     end
@@ -63,7 +63,7 @@ class TestClasse < Test::Unit::TestCase
         url = "https://twitter.com"
         rand3 = KurzyDB.gen_hash(3)
 
-        b.post '/add', params={"url"=> url, "shorturl"=>rand3}
+        b.post '/a/add', params={"url"=> url, "shorturl"=>rand3}
         assert b.last_response.ok?
         b.get "/#{rand3}"
         assert b.last_response.redirect?
@@ -89,9 +89,9 @@ class TestClasse < Test::Unit::TestCase
         urls = ["https://twitter.com/#{rands[0]}", "https://twitter.com/#{rands[1]}", "https://twitter.com/#{rands[2]}"]
         rands.each_with_index do |r, i|
             if r == rands[2]
-                post '/add',  params={"url"=> urls[i], "shorturl"=>rands[i], "privateurl" => "true"}
+                post '/a/add',  params={"url"=> urls[i], "shorturl"=>rands[i], "privateurl" => "true"}
             else
-                post '/add',  params={"url"=> urls[i], "shorturl"=>rands[i]}
+                post '/a/add',  params={"url"=> urls[i], "shorturl"=>rands[i]}
             end
         end
 

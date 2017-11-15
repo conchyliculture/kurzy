@@ -73,7 +73,7 @@ def get_list(max: nil, priv: false)
     return res
 end
 
-post '/add' do
+post '/a/add' do
     kurl = params['url']
     kurl_custom = params['shorturl']
     kurl_private = params['privateurl']
