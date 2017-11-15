@@ -31,7 +31,7 @@ Now you can navigate to `http://localhost:4567/t` to be redirected to `https://t
 
 Go to `chrome://settings/searchEngines`, click Add to create a new Search engine:
   * Name: Kurzy
-  * Keyword: t
+  * Keyword: k
   * URL : http://localhost:4567/%s
 
 BOOM! Now just type `k<TAB>t<ENTER>` and you're on the best page of the world!
