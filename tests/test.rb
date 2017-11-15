@@ -42,9 +42,9 @@ class TestClasse < Test::Unit::TestCase
         url = "https://twitter.com"
         post '/a', params={"lsturl"=> url, "lsturl-custom"=>rand3}
         assert last_response.ok?
-        assert_equal last_response.body, "Successfully added short link <a href=\"#{url}\">#{rand3}</>"
+        assert_equal({"short"=>rand3, "success"=>true, "url"=>url}, JSON.parse(last_response.body))
 
-        get '/list?format=json'
+        get '/list'
         assert last_response.ok?
         table = JSON.parse(last_response.body)["list"]
         assert_equal 0, table[0]["counter"]
@@ -80,9 +80,10 @@ class TestClasse < Test::Unit::TestCase
         KurzyDB.truncate()
         rand3 = KurzyDB.gen_hash(3)
         post '/a', params={"lsturl"=> "https://twitter.com", "lsturl-custom"=>rand3}
-        post '/a', params={"lsturl"=> "https://twitter.com", "lsturl-custom"=>rand3}
         assert last_response.ok?
-        assert_equal "Error adding short link: 'The short url #{rand3} already exists'", last_response.body
+        post '/a', params={"lsturl"=> "https://twitter.com", "lsturl-custom"=>rand3}
+        assert ! last_response.ok?
+        assert_equal({"success" => false, "msg" => "The short url #{rand3} already exists"}, JSON.parse(last_response.body))
     end
 
     def testAddTwiceJson()
@@ -108,7 +109,7 @@ class TestClasse < Test::Unit::TestCase
 
         b.post '/a', params={"lsturl"=> "https://twitter.com", "lsturl-custom"=>rand3}
         assert b.last_response.ok?
-        assert_equal b.last_response.body, "Successfully added short link <a href=\"#{url}\">#{rand3}</>"
+        assert_equal JSON.parse(b.last_response.body), {"short"=>rand3, "success"=>true, "url"=>"https://twitter.com"}
         b.get "/d/#{rand3}", {'rack.session' =>  { :logged => true } }
         assert b.last_response.ok?
         assert_equal "Error deleting short link: 'You are not allowed to perform this action'", b.last_response.body
@@ -124,23 +125,15 @@ class TestClasse < Test::Unit::TestCase
         urls = ["https://twitter.com/#{rands[0]}", "https://twitter.com/#{rands[1]}", "https://twitter.com/#{rands[2]}"]
         rands.each_with_index do |r, i|
             if r == rands[2]
-                post '/a',  params={"lsturl"=> urls[i], "lsturl-custom"=>rands[i], "lsturl-private" => "on"} 
+                post '/a',  params={"lsturl"=> urls[i], "lsturl-custom"=>rands[i], "lsturl-private" => "on"}
             else
-                post '/a',  params={"lsturl"=> urls[i], "lsturl-custom"=>rands[i]} 
+                post '/a',  params={"lsturl"=> urls[i], "lsturl-custom"=>rands[i]}
             end
         end
 
         get '/list'
         assert last_response.ok?
-        table = Nokogiri::HTML.parse(last_response.body).css('tbody tr')
-        assert_equal 2, table.size()
-        (0..1).each do |i|
-            assert_equal(rands[i], table[i].css('td')[1].text)
-            assert_equal(urls[i], table[i].css('td')[2].text)
-        end
-
-        get '/list?format=json'
-        assert last_response.ok?
+        pp last_response.body
         table = JSON.parse(last_response.body)["list"]
         assert_equal 2, table.size()
         (0..1).each do |i|

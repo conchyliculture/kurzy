@@ -23,10 +23,10 @@ Encoding.default_internal = Encoding::UTF_8
 case ENV['RACK_ENV']
 when "test"
     $base_url = "http://localhost:4567/"
-    $adminpwd = "e4f8e3fe05117ff3bb412250fe6551a8"
+    $adminpwd = "toto"
 else
     $base_url = "http://goto.ninja/"
-    $adminpwd = "e4f8e3fe05117ff3bb412250fe6551a8"
+    $adminpwd = "toto"
 end
 
 def nay(msg)
@@ -87,28 +87,18 @@ post '/a' do
     kurl = params['lsturl']
     kurl_custom = params['lsturl-custom']
     kurl_private = params['lsturl-private']
-    format = params['format']
     
     @res = add(url:kurl, short: kurl_custom, priv: kurl_private == "on")
     
-    if format == 'json'
-        content_type 'application/json'
-        status 400 unless @res[:success]
-        return @res.to_json
-    else
-        slim :add
-    end
+    content_type 'application/json'
+    status 400 unless @res[:success]
+    return @res.to_json
 end
 
 get '/list' do
-    format = params[:format]
     @liste = get_list()
-    if format == 'json'
-        content_type 'application/json'
-        return @liste.to_json
-    else
-        slim :list
-    end
+    content_type 'application/json'
+    return @liste.to_json
 end
 
 get '/d/*' do |shortened_url|
@@ -127,7 +117,7 @@ get '/d/*' do |shortened_url|
 end
 
 post '/login' do
-    pwd = params[:adminpwd]
+    pwd = params[:password]
     if pwd
         if pwd == $adminpwd
             session[:logged] = true
