@@ -1,2 +1,3 @@
 # kurzy
-URL shortener - API compatible with [lstu.fr](http://lstu.fr)
+URL shortener - API
+Inspired by [lstu.fr](http://lstu.fr), because, srsly, perl?

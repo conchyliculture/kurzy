@@ -31,9 +31,9 @@ class TestClasse < Test::Unit::TestCase
         assert last_response.body.include?("Kurzy - URL shortener")
         assert last_response.body.include?("value=\"fail\"")
 
-        get '/fail.json'
+        get '/fail', params = {"format" => "json"}
         assert last_response.ok?
-        assert_equal JSON.parse(last_response.body), {"url" => nil, "success" => true}
+        assert_equal JSON.parse(last_response.body), {"msg" => "No such short url: 'fail'", "success" => false}
     end
 
     def testAdd()
@@ -95,30 +95,27 @@ class TestClasse < Test::Unit::TestCase
     end
 
     def testDelete()
+        b = Rack::Test::Session.new(Rack::MockSession.new(Sinatra::Application))
         KurzyDB.truncate()
         url = "https://twitter.com"
         rand3 = KurzyDB.gen_hash(3)
-        get "/d/#{rand3}"
-        assert last_response.ok?
-        assert_equal "Error deleting short link: 'The short url #{rand3} doesn&#39;t exist'", last_response.body
+        b.get "/d/#{rand3}"
+        assert b.last_response.ok?
+        assert_equal "Error deleting short link: 'You are not allowed to perform this action'", b.last_response.body
+        b.get "/d/#{rand3}",  {'rack.session' =>  { :logged => true } }
+        assert b.last_response.ok?
+        assert_equal "Error deleting short link: 'You are not allowed to perform this action'", b.last_response.body
 
-        post '/a', params={"lsturl"=> "https://twitter.com", "lsturl-custom"=>rand3}
-        assert last_response.ok?
-        assert_equal last_response.body, "Successfully added short link <a href=\"#{url}\">#{rand3}</>"
-
-        get "/#{rand3}"
-        assert last_response.redirect?
-        assert_equal last_response.body, ""
-        assert_equal last_response.header["Location"], url
-
-        get "/d/#{rand3}"
-        assert last_response.ok?
-        assert_equal "Deleted #{rand3}", last_response.body
-
-        get "/#{rand3}"
-        assert last_response.ok?
-        assert last_response.body.include?("Kurzy - URL shortener")
-        assert last_response.body.include?("value=\"#{rand3}\"")
+        b.post '/a', params={"lsturl"=> "https://twitter.com", "lsturl-custom"=>rand3}
+        assert b.last_response.ok?
+        assert_equal b.last_response.body, "Successfully added short link <a href=\"#{url}\">#{rand3}</>"
+        b.get "/d/#{rand3}", {'rack.session' =>  { :logged => true } }
+        assert b.last_response.ok?
+        assert_equal "Error deleting short link: 'You are not allowed to perform this action'", b.last_response.body
+        b.get "/#{rand3}"
+        assert b.last_response.redirect?
+        assert_equal b.last_response.body, ""
+        assert_equal b.last_response.header["Location"], url
     end
 
     def testList()

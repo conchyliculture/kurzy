@@ -67,9 +67,8 @@ module KurzyDB
         if res
             KURL.where(id: res[:id]).update(counter: res[:counter]+1)
             return res[:url]
-        else
-            return nil
         end
+        return nil
     end
 
     def KurzyDB.list(max:nil, priv: false)
