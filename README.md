@@ -6,7 +6,7 @@ Just your simple URL shortener.
 
 Inspired by [lstu.fr](http://lstu.fr), because, srsly, perl?
 
-## Install and Run
+## Getting Started
 
 ```
 apt install ruby-slim ruby-sequel ruby-sinatra
@@ -36,7 +36,16 @@ Go to `chrome://settings/searchEngines`, click Add to create a new Search engine
 
 BOOM! Now just type `k<TAB>t<ENTER>` and you're on the best page of the world!
 
+## Logging in
 
-## Security
+You can log in by providing the password. If you open the list view, you can now delete links!
+
+## Security and Privacy
+
+### Security
 
 Nope.
+
+### Privacy
+
+Lol.
