@@ -9,17 +9,6 @@ require "sinatra"
 require_relative "db.rb"
 
 set :bind, "0.0.0.0"
-configure do
-    use Rack::Session::Cookie,  :key => 'rack.session',
-                            :domain => 'goto.ninja',
-                            :path => '/',
-                            :expire_after => 86400*2,#Inseconds
-                            :secret => SecureRandom.hex # Kills all sessions on restart, which is fine
-end
-
-Encoding.default_external = Encoding::UTF_8
-Encoding.default_internal = Encoding::UTF_8
-
 case ENV['RACK_ENV']
 when "test"
     $base_url = "http://localhost:4567/"
@@ -28,18 +17,31 @@ else
     $base_url = "http://goto.ninja/"
     $adminpwd = "toto"
 end
+use Rack::Session::Cookie,  :key => 'rack.session',
+                        :path => '/',
+                        :expire_after => 86400*2,#Inseconds
+                        :secret => SecureRandom.hex # Kills all sessions on restart, which is fine
+
+Encoding.default_external = Encoding::UTF_8
+Encoding.default_internal = Encoding::UTF_8
+
 
 def nay(msg)
+    status 400
     return {msg: msg, success:false}
 end
 
 def yay(msg)
-    return {msg: msg, success:false}
+    return {msg: msg, success:true}
 end
 
 def add(url:, short:, priv: true)
+    unless url
+        return nay('I need an url')
+    end
     begin
-        return {success: true, url: url, short: KurzyDB.add(short:short, url:url, priv: priv)}
+        res = {success: true, url: url, short: KurzyDB.add(short:short, url:url, priv: priv)}
+        return res
     rescue KurzyDB::Error =>  e
         return nay(e.message)
     end
@@ -70,8 +72,8 @@ def get(short:)
     return res
 end
 
-def get_list(max: nil)
-    priv = session[:logged]
+def get_list(max: nil, priv: false)
+    $stderr.puts("get_list #{priv}")
     res={}
     res[:list] = KurzyDB.list(max: max, priv: priv)
     res[:success] = true
@@ -84,11 +86,10 @@ end
 
 
 post '/a' do
-    kurl = params['lsturl']
-    kurl_custom = params['lsturl-custom']
-    kurl_private = params['lsturl-private']
-    
-    @res = add(url:kurl, short: kurl_custom, priv: kurl_private == "on")
+    kurl = params['url']
+    kurl_custom = params['shorturl']
+    kurl_private = params['privateurl']
+    @res = add(url:kurl, short: kurl_custom, priv: kurl_private == "true")
     
     content_type 'application/json'
     status 400 unless @res[:success]
@@ -96,7 +97,7 @@ post '/a' do
 end
 
 get '/list' do
-    @liste = get_list()
+    @liste = get_list(priv: session["logged"])
     content_type 'application/json'
     return @liste.to_json
 end
@@ -120,7 +121,7 @@ post '/login' do
     pwd = params[:password]
     if pwd
         if pwd == $adminpwd
-            session[:logged] = true
+            session["logged"] = true
             content_type 'application/json'
             return yay('Successfully logged in').to_json
         else
@@ -128,13 +129,12 @@ post '/login' do
             return nay("Bad password.").to_json
         end
     end
-    redirect to("/"), 301
 end
 
 get '/logout' do
     content_type 'application/json'
-    if session[:logged]
-        session[:logged] = false
+    if session["logged"]
+        session["logged"] = false
         return yay('Successfully logged out').to_json
     else
         return nay('Not logged in').to_json
@@ -144,7 +144,7 @@ end
 get '/*' do |shortened_url|
     format = params[:format]
     if shortened_url == ""
-        slim :main
+        return slim :main
     end
 
     res = get(short: shortened_url)

@@ -15,7 +15,7 @@ html
         div class="modal-content"
           h4
             |Login
-          form action="/login" method="post"
+          form action="/login" method="post" id="loginform"
             div class="row"
               div class="input-field col s4"
                 label class="sr-only" for="password"
@@ -23,7 +23,7 @@ html
                 input type="password" name="password" id="password" required=true
             div class="row"
               div class="col s4"
-                button class="btn waves-effect waves-light" type="submit" name="action-login"
+                button class="btn waves-effect waves-light modal-action modal-close" type="submit" name="action-login"
                     |Submit
 
         div class="modal-footer"
@@ -40,39 +40,41 @@ html
               a href="#listtab"
                 |List links
       div id="add" class="col s12"
-        form action="/a" method="post"
+        form action="/a" method="post" id="addform"
           div class="row"
             div class="input-field col s4"
-              label class="sr-only" for="lsturl"
+              label class="sr-only" for="urlfield"
                 |URL to shorten
-              input type="url" name="lsturl" id="lsturl" placeholder="https://twitter.com" required=true
+              input type="url" id="urlfield" placeholder="https://twitter.com" required=true
             div class="input-field col s4"
-              label class="sr-only" for="lsturl-custom"
+              label class="sr-only" for="shorturlfield" data-error="Already in use"
                 |Custom shortened text
               -if @short 
-                input type="text" name="lsturl-custom" id="lsturl-custom" placeholder="twitter" value="#{@short}"
+                input type="text" id="shorturlfield" placeholder="twitter" class="validate" value="#{@short}"
               -else
-                input type="text" name="lsturl-custom" id="lsturl-custom" placeholder="twitter"
-            div class="row s12"
-              input type="checkbox" class="filled-in" id="private" name="lsturl-private" 
-              label for="private"
+                input type="text" id="shorturlfield" placeholder="twitter" class="validate"  
+            div class="col s4"
+              input type="checkbox" class="filled-in" id="privatefield"
+              label for="privatefield"
                 |Private?
-
+          div class="row" id="add_result"
           div class="row"
             div class="col s4"
               button class="btn waves-effect waves-light" type="submit" name="action-add"
                   |Submit
       div id="listtab" class="col s12"
-        div class="row"
-          div class="col s12"
-            - if @logged
-              a class="btn waves-effect waves-light modal-trigger" href="/logout"
-                |logout
-            - else
-              a class="btn waves-effect waves-light modal-trigger" href="#loginmodal"
-                |login
         div id="list" class="row"
+      div class="row"
+        div class="col s12" id="logoutdiv"
+            a class="btn waves-effect waves-light modal-trigger" href="#" onclick="kurzy_logout(); return false;"
+              |logout
+        div class="col s12" id="logindiv"
+            a class="btn waves-effect waves-light modal-trigger" href="#loginmodal"
+              |login
     javascript:
+      $('#logoutdiv').hide();
+      $('#addform').on('submit', kurzy_add);
+      $('#loginform').on('submit', kurzy_login);
       $(document).ready(function(){
           $('ul.tabs').tabs();
           $('.modal').modal();
