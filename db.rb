@@ -6,6 +6,7 @@ module KurzyDB
     if not Object.const_defined?(:DB)
         case ENV['RACK_ENV']
         when "test"
+            # Make a DB in memory when testing
             DB = Sequel.sqlite
         else
             DB = Sequel.sqlite 'db/kurzy.sqlite'
@@ -27,11 +28,11 @@ module KurzyDB
         create_table unless table_exists?
     end
 
-    def KurzyDB.add(url:, short:nil, priv:true)
+    def KurzyDB.add(url:, short:"", priv:true)
         return unless url
 
-        s = short
-        unless s
+        s = short || ""
+        if s == ""
             s = KurzyDB.gen_hash()
         end
         begin
@@ -72,7 +73,7 @@ module KurzyDB
 
     def KurzyDB.list(max:nil, priv: false)
         rows = priv ? KURL.all :  KURL.where(private: false)
-        return rows.map{|row| row.to_hash}
+        return rows.map{ |row| row.to_hash }
     end
 
     def KurzyDB.truncate()

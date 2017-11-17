@@ -57,6 +57,24 @@ class TestClasse < Test::Unit::TestCase
         assert_equal({"msg"=> "The short url #{rand3} already exists", "success" => false},  JSON.parse(last_response.body))
     end
 
+    def testAddNoShort()
+        KurzyDB.truncate()
+        rand3 = KurzyDB.gen_hash(3)
+        url = "htps://twitter.com"
+        post '/a/add', params={"url"=> url}
+        assert last_response.ok?
+        response = JSON.parse(last_response.body)
+        assert_equal response["success"], true
+        assert_equal response["url"], url
+        short = response["short"]
+        assert {short=~/^.{6}$/}
+
+        get "/#{short}"
+        assert last_response.redirect?
+        assert_equal last_response.body, ""
+        assert_equal last_response.header["Location"], url
+    end
+
     def testDelete()
         b = Rack::Test::Session.new(Rack::MockSession.new(Sinatra::Application))
         KurzyDB.truncate()
