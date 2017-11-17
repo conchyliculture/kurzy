@@ -1,4 +1,5 @@
 module KurzyDB
+    require "cgi"
     require "sequel"
 
     Sequel::Model.plugin(:schema)
@@ -30,8 +31,10 @@ module KurzyDB
 
     def KurzyDB.add(url:, short:"", priv:true)
         return unless url
+        url = CGI.escape(url)
 
         s = short || ""
+        s = CGI.escape(s)
         if s == ""
             s = KurzyDB.gen_hash()
         end
