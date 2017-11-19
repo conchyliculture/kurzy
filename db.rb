@@ -1,6 +1,6 @@
 module KurzyDB
-    require "cgi"
     require "sequel"
+    require_relative "utils.rb"
 
     Sequel::Model.plugin(:schema)
 
@@ -31,20 +31,16 @@ module KurzyDB
 
     def KurzyDB.add(url:, short:"", priv:true)
         return unless url
-        url = CGI.escape(url)
 
         s = short || ""
-        s = CGI.escape(s)
-        if s == ""
-            s = KurzyDB.gen_hash()
-        end
+
         begin
             KURL.insert(url: url, short: s, private: priv)
         rescue Sequel::UniqueConstraintViolation
             if s == short
                 raise KurzyDB::Error.new("The short url #{short} already exists")
             else
-                s = KurzyDB.gen_hash()
+                s = KurzyUtils.gen_hash()
                 KurzyDB.insert(url: url, short: s, private: priv)
             end
         end
@@ -59,10 +55,6 @@ module KurzyDB
         else
             raise KurzyDB::Error.new("The short url #{short} doesn't exist")
         end
-    end
-
-    def KurzyDB.gen_hash(length=6)
-        temp_hash = [*'a'..'h', 'j', 'k', *'m'..'z', *'A'..'H', *'J'..'N', *'P'..'Z', *'0'..'9', '-', '_'].sample(length).join();
     end
 
     def KurzyDB.get_url(short:)

@@ -7,6 +7,7 @@ require "securerandom"
 require "sinatra"
 
 require_relative "db.rb"
+require_relative "utils.rb"
 
 $adminpwd = "toto"
 
@@ -29,10 +30,25 @@ def yay(msg)
     return {msg: msg, success:true}
 end
 
-def add(url:, short:, priv: true)
+
+def add(url:, short:"", priv: true)
     unless url
         return nay('I need an url')
     end
+    if "#{short}" == ""
+        short = KurzyUtils.gen_hash()
+    else
+        short = KurzyUtils.short_filter(short)
+    end
+
+    begin
+        url = KurzyUtils.url_filter(url)
+    rescue URI::InvalidURIError => e
+        return nay("Bad URI")
+    rescue Exception => e
+        return nay(e.message)
+    end
+
     begin
         res = {success: true, url: url, short: KurzyDB.add(short:short, url:url, priv: priv)}
         return res
