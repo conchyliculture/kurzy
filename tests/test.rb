@@ -30,8 +30,24 @@ class TestClasse < Test::Unit::TestCase
         assert last_response.body.include?("value=\"fail\"")
 
         get '/fail', params = {"format" => "json"}
-        assert_equal last_response.status, 400
-        assert_equal JSON.parse(last_response.body), {"msg" => "No such short url: 'fail'", "success" => false}
+        assert {last_response.status == 400}
+        assert {JSON.parse(last_response.body) == {"msg" => "No such short url: 'fail'", "success" => false}}
+    end
+
+    def genericTestAdd(p)
+        KurzyDB.truncate()
+        post '/a/add', params=p
+        assert last_response.ok?
+        response = JSON.parse(last_response.body)
+        assert response["success"]
+        assert {response["url"] == p["url"]}
+        short = response["short"]
+        assert {short=~/^.{6}$/}
+
+        get "/#{short}"
+        assert last_response.redirect?
+        assert {last_response.body == ""}
+        assert {last_response.header["Location"] == p["url"]}
     end
 
     def testAddJson()
@@ -47,23 +63,7 @@ class TestClasse < Test::Unit::TestCase
         post '/a/add', params={"url"=> "https://twitter.com", "shorturl"=>rand6}
         post '/a/add', params={"url"=> "https://twitter.com", "shorturl"=>rand6}
         assert last_response.bad_request?
-        assert_equal({"msg"=> "The short url #{rand6} already exists", "success" => false},  JSON.parse(last_response.body))
-    end
-
-    def genericTestAdd(p)
-        KurzyDB.truncate()
-        post '/a/add', params=p
-        assert last_response.ok?
-        response = JSON.parse(last_response.body)
-        assert_equal response["success"], true
-        assert_equal response["url"], p["url"]
-        short = response["short"]
-        assert {short=~/^.{6}$/}
-
-        get "/#{short}"
-        assert last_response.redirect?
-        assert_equal last_response.body, ""
-        assert_equal last_response.header["Location"], p["url"]
+        assert {JSON.parse(last_response.body) == {"msg"=> "The short url #{rand6} already exists", "success" => false}}
     end
 
     def testAddNoShort()
@@ -75,16 +75,16 @@ class TestClasse < Test::Unit::TestCase
         KurzyDB.truncate()
         url = "https://www.pute.ninja.lol/qloueskgjb_  /amohaazih&mlnk?jzda=z=A&5u#<MBDG~~F<"
         post '/a/add', params={"url"=> url}
-        assert_equal last_response.status, 400
-        assert_equal({"msg" => "Bad URI", "success" => false}, JSON.parse(last_response.body))
+        assert {last_response.status == 400}
+        assert {JSON.parse(last_response.body) == {"msg" => "Bad URI", "success" => false}}
     end
 
     def testAddEvilURL()
         KurzyDB.truncate()
         url = "https://www.pute.ninja.lol/<script>alert('lol')</script>"
         post '/a/add', params={"url"=> url}
-        assert_equal last_response.status, 400
-        assert_equal({"msg" => "Bad URI", "success" => false}, JSON.parse(last_response.body))
+        assert {last_response.status == 400}
+        assert {JSON.parse(last_response.body) == {"msg" => "Bad URI", "success" => false}}
     end
 
     def testDelete()
@@ -97,17 +97,17 @@ class TestClasse < Test::Unit::TestCase
         assert b.last_response.ok?
         b.get "/#{rand6}"
         assert b.last_response.redirect?
-        assert_equal b.last_response.body, ""
-        assert_equal b.last_response.header["Location"], url
+        assert {b.last_response.body == ""}
+        assert {b.last_response.header["Location"] == url}
 
         b.get "/d/#{rand6}"
-        assert_equal b.last_response.status, 400
-        assert_equal({"msg" => "You are not allowed to perform this action", "success" => false}, JSON.parse(b.last_response.body))
+        assert {b.last_response.status == 400}
+        assert {JSON.parse(b.last_response.body) == {"msg" => "You are not allowed to perform this action", "success" => false}}
 
         b.get "/d/#{rand6}", {}, "rack.session" => {"logged" => true}
         assert b.last_response.ok?
         assert JSON.parse(b.last_response.body)["success"]
-        assert_equal rand6, JSON.parse(b.last_response.body)["short"]
+        assert {JSON.parse(b.last_response.body)["short"] == rand6}
         b.get "/#{rand6}"
         assert b.last_response.ok?
         assert b.last_response.body.include?("value=\"#{rand6}\"")
@@ -132,10 +132,10 @@ class TestClasse < Test::Unit::TestCase
         get '/l/list'
         assert last_response.ok?
         table = JSON.parse(last_response.body)["list"]
-        assert_equal 2, table.size()
+        assert {table.size() == 2}
         (0..1).each do |i|
-            assert_equal(rands[i], table[i]['short'])
-            assert_equal(urls[i], table[i]['url'])
+            assert {rands[i] == table[i]['short']}
+            assert {urls[i] == table[i]['url']}
         end
     end
 
@@ -147,7 +147,7 @@ class TestClasse < Test::Unit::TestCase
 
     def testURLFilter
         url = "';!-\"<>=&{()}"
-        assert_equal ";!-=&()", KurzyUtils.remove_bad_urlchar(url)
+        assert {KurzyUtils.remove_bad_urlchar(url) == ";!-=&()"}
 
         url = "https://www.pute.ninja.lol/qloueskgjb_  /amohaazih&mlnk?jzda=z=A&5u#<MBDG~~F<"
         assert_raise URI::InvalidURIError do
@@ -155,10 +155,10 @@ class TestClasse < Test::Unit::TestCase
         end
 
         url = "https://www.pute.ninja.lol/qloueskgjb_/amohaazihmlnk?jzda=zA&5=u#MBDGF"
-        assert_equal url, KurzyUtils.url_filter(url)
+        assert {KurzyUtils.url_filter(url) == url}
 
         short = "<script>alert('lol')"
-        assert_equal "scriptalert(lol)", KurzyUtils.short_filter(short)
+        assert {KurzyUtils.short_filter(short) == "scriptalert(lol)"}
 
     end
 
