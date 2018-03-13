@@ -4,7 +4,7 @@ end
 module KurzyUtils
 
     def KurzyUtils.gen_hash(length=6)
-        [*'a'..'h', 'j', 'k', *'m'..'z', *'A'..'H', *'J'..'N', *'P'..'Z', *'0'..'9', '-', '_'].sample(length).join()
+        [*'a'..'h', 'j', 'k', *'m'..'z', *'0'..'9', '-', '_'].sample(length).join()
     end
 
     def KurzyUtils.remove_bad_urlchar(s)
@@ -34,6 +34,6 @@ module KurzyUtils
     def KurzyUtils.short_filter(short)
         return nil unless short
         return nil if short.length > 20
-        return KurzyUtils.remove_bad_urlchar(short)
+        return KurzyUtils.remove_bad_urlchar(short).downcase
     end
 end

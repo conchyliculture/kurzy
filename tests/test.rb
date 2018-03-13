@@ -131,11 +131,11 @@ class TestClasse < Test::Unit::TestCase
 
         get '/l/list'
         assert last_response.ok?
-        table = JSON.parse(last_response.body)["list"]
-        assert {table.size() == 2}
+        response = JSON.parse(last_response.body)["list"]
+        assert {response.size() == 2}
         (0..1).each do |i|
-            assert {rands[i] == table[i]['short']}
-            assert {urls[i] == table[i]['url']}
+            assert {rands[i].downcase == response[i]['short']}
+            assert {urls[i] == response[i]['url']}
         end
     end
 
@@ -157,7 +157,7 @@ class TestClasse < Test::Unit::TestCase
         url = "https://www.pute.ninja.lol/qloueskgjb_/amohaazihmlnk?jzda=zA&5=u#MBDGF"
         assert {KurzyUtils.url_filter(url) == url}
 
-        short = "<script>alert('lol')"
+        short = "<script>alert('LOL')"
         assert {KurzyUtils.short_filter(short) == "scriptalert(lol)"}
 
     end
