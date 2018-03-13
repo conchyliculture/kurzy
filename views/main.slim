@@ -4,9 +4,6 @@ html
     title
       |Kurzy
     link type="text/css" rel="stylesheet" href="/materialize/css/materialize.min.css"  media="screen,projection"
-    script src="/jquery-3.2.1.min.js"
-    script src="/materialize/js/materialize.min.js"
-    script src="/kurzy.js"
   body
     div class="container" style="margin-top:1em"
       div id="aboutmodal" class="modal"
@@ -63,7 +60,7 @@ html
                 |List links
       div id="add" class="col s10"
         form action="/a" method="post" id="addform" style="margin-top:2em;"
-          div class="row"
+          div class="row valign-wrapper"
             div class="input-field col s4"
               label class="sr-only" for="urlfield"
                 |URL to shorten
@@ -75,10 +72,10 @@ html
                 input type="text" id="shorturlfield" placeholder="twitter" class="validate" value="#{@short}"
               -else
                 input type="text" id="shorturlfield" placeholder="twitter" class="validate"
-            div class="input-field col s4 tooltipped"  data-position="bottom" data-delay="50" data-tooltip="Whether to show the link in the list"
+            div class="col s4 tooltipped"  data-position="bottom" data-delay="50" data-tooltip="Whether to show the link in the list"
               input type="checkbox" id="privatefield"
               label for="privatefield"
-                |Private?
+                |Make private?
           div class="row" id="add_result"
           div class="row"
             div class="col s4"
@@ -87,6 +84,9 @@ html
 
       div id="listtab" class="col s10"
         div id="list" class="row"
+    script src="/jquery-3.2.1.min.js"
+    script src="/materialize/js/materialize.min.js"
+    script src="/kurzy.js"
     javascript:
       $('#logoutdiv').hide();
       $('#addform').on('submit', kurzy_add);
