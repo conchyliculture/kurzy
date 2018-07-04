@@ -2,8 +2,6 @@ module KurzyDB
     require "sequel"
     require_relative "utils.rb"
 
-    Sequel::Model.plugin(:schema)
-
     if not Object.const_defined?(:DB)
         case ENV['RACK_ENV']
         when "test"
@@ -13,12 +11,8 @@ module KurzyDB
             DB = Sequel.sqlite 'db/kurzy.sqlite'
         end
     end
-
-    class Error < Exception
-    end
-
-    class KURL < Sequel::Model(:kurzy)
-        set_schema do
+    unless DB.table_exists?(:kurzy)
+        DB.create_table :kurzy do
             primary_key :id
             String  :short, :unique => true, :empty => false
             String  :url, :unique => false, :empty => false
@@ -26,7 +20,12 @@ module KurzyDB
             DateTime	:timestamp, default: Sequel::CURRENT_TIMESTAMP
             Boolean :private, default: 1
         end
-        create_table unless table_exists?
+    end
+
+    class Error < Exception
+    end
+
+    class KURL < Sequel::Model(:kurzy)
     end
 
     def KurzyDB.add(url:, short:"", priv:true)
