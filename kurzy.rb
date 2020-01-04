@@ -152,6 +152,7 @@ get '/*' do |shortened_url|
         return res.to_json
     else
         if res[:success]
+            expires 0, :no_store, :must_revalidate
             redirect to(res[:url]), 301
         else
             status 200
