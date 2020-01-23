@@ -64,6 +64,14 @@ function load_liste() {
             console.log('error');
             console.log(s);
             console.log(data.responseText);
+            var tab = $('#list');
+            var tabhtml = '<div class="card-panel red darken-1">\n';
+            tabhtml += '<div class="row">';
+            tabhtml += '<div class="col white-text">';
+            tabhtml += data.responseJSON['msg'];
+            tabhtml +='</div>';
+            tabhtml +='</div>';
+            tab.html(tabhtml);
         }
     });
 }
