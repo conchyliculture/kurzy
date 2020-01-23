@@ -83,6 +83,9 @@ def get(short:)
 end
 
 def get_list(max: nil, priv: false)
+    if not session[:logged]
+        return nay("You are not allowed to perform this action")
+    end
     res={}
     res[:list] = KurzyDB.list(max: max, priv: priv)
     res[:success] = true
