@@ -13,7 +13,14 @@ apt install ruby-slim ruby-sequel ruby-sinatra
 git clone https://github.com/conchyliculture/kurzy
 cd kurzy
 ```
-change the `$adminpwd` value to something sensible.
+
+```
+cp config.json.template config.json
+```
+
+Then edit `config.json` to your needs.
+
+
 ```
 ruby kurzy.rb
 ```
