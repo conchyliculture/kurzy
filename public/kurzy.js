@@ -1,11 +1,8 @@
 function show_liste(liste) {
-    var logged_in = $('#logoutdiv').is(':visible');
     var tab = $('#list');
     var html = '<table>';
     html += '<tr>';
-    if (logged_in) {
-        html += '<th>Delete</th>';
-    }
+    html += '<th>Delete</th>';
     html += '<th>Date</th>';
     html += '<th>Short URL</th>';
     html += '<th>Destination</th>';
@@ -14,11 +11,9 @@ function show_liste(liste) {
     for (var i = 0; i < liste.length; i++) {
         var elem = liste[i];
         html += '<tr>';
-        if (logged_in) {
-            html += '<td>';
-            html += '<a href="#" onclick="delete_short(\''+elem['short']+'\')">x</a>';
-            html += '</td>';
-        }
+        html += '<td>';
+        html += '<a href="#" onclick="delete_short(\''+elem['short']+'\')">x</a>';
+        html += '</td>';
         html += '<td>';
         html += elem['timestamp'];
         html += '</td>';
@@ -58,7 +53,8 @@ function load_liste() {
         url: "/l/list",
         dataType: "json",
         success: function (data, s) {
-            show_liste(data['list']);
+            if (data['list'].length > 0)
+                show_liste(data['list']);
         },
         error: function(data, s) {
             console.log('error');
@@ -106,9 +102,7 @@ function kurzy_logout(e) {
         url: "/l/logout",
         type: "GET",
         success: function(data, textStatus) {
-            load_liste();
-            $('#logindiv').show();
-            $('#logoutdiv').hide();
+            location.reload();
         },
         error: function(data) {
             console.log(data.responseJSON);
@@ -125,10 +119,7 @@ function kurzy_login(e) {
         dataType: "json",
         data: {'password': pwd},
         success: function(data, textStatus) {
-            load_liste();
-            $('#logindiv').hide();
-            $('#logoutdiv').show();
-            Materialize.toast('Login Successful!', 4000);
+            location.reload();
         },
         error: function(data) {
             Materialize.toast('Login Failed', 4000);
