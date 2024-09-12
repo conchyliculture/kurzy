@@ -18,7 +18,6 @@ module KurzyDB
             String  :url, :unique => false, :empty => false
             Integer :counter, default: 0
             DateTime	:timestamp, default: Sequel::CURRENT_TIMESTAMP
-            Boolean :private, default: 1
         end
     end
 
@@ -28,19 +27,19 @@ module KurzyDB
     class KURL < Sequel::Model(:kurzy)
     end
 
-    def KurzyDB.add(url:, short:"", priv:true)
+    def KurzyDB.add(url:, short:"")
         return unless url
 
         s = short || ""
 
         begin
-            KURL.insert(url: url, short: s, private: priv)
+            KURL.insert(url: url, short: s)
         rescue Sequel::UniqueConstraintViolation
             if s == short
                 raise KurzyDB::Error.new("The short url #{short} already exists")
             else
                 s = KurzyUtils.gen_hash()
-                KurzyDB.insert(url: url, short: s, private: priv)
+                KurzyDB.insert(url: url, short: s)
             end
         end
         return s
@@ -65,8 +64,8 @@ module KurzyDB
         return nil
     end
 
-    def KurzyDB.list(max:nil, priv: false)
-        rows = priv ? KURL.all :  KURL.where(private: false)
+    def KurzyDB.list(max:nil)
+        rows = KURL.all
         return rows.map{ |row| row.to_hash }
     end
 

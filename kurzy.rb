@@ -6,7 +6,6 @@ require "sinatra"
 require_relative "db.rb"
 require_relative "utils.rb"
 
-
 if not File.exist?("config.json")
   raise Exception.new("Please copy config.json.template into config.json and edit it to your needs")
 end
@@ -39,7 +38,7 @@ def yay(msg)
 end
 
 
-def add(url:, short:"", priv: true)
+def add(url:, short:"")
     unless url
         return nay('I need an url')
     end
@@ -58,7 +57,7 @@ def add(url:, short:"", priv: true)
     end
 
     begin
-        res = {success: true, url: url, short: KurzyDB.add(short:short, url:url, priv: priv)}
+        res = {success: true, url: url, short: KurzyDB.add(short:short, url:url)}
         return res
     rescue KurzyDB::Error =>  e
         return nay(e.message)
@@ -90,21 +89,24 @@ def get(short:)
     return res
 end
 
-def get_list(max: nil, priv: false)
+def get_list(max: nil)
     if not session[:logged]
-        return nay("You are not allowed to perform this action")
+      # Just do nothing
+      return {success: true, list: [] }
     end
     res={}
-    res[:list] = KurzyDB.list(max: max, priv: priv)
+    res[:list] = KurzyDB.list(max: max)
     res[:success] = true
     return res
 end
 
 post '/a/add' do
+    if not session[:logged] and $private_inserts
+      return nay("You are not allowed to perform this action").to_json
+    end
     kurl = params['url']
     kurl_custom = params['shorturl']
-    kurl_private = params['privateurl']
-    @res = add(url:kurl, short: kurl_custom, priv: kurl_private == "true")
+    @res = add(url:kurl, short: kurl_custom)
 
     content_type 'application/json'
     status 400 unless @res[:success]
@@ -112,12 +114,15 @@ post '/a/add' do
 end
 
 get '/l/list' do
-    @liste = get_list(priv: session["logged"])
+    @liste = get_list()
     content_type 'application/json'
     return @liste.to_json
 end
 
 get '/d/*' do |shortened_url|
+    if not session[:logged]
+      return nay("You are not allowed to perform this action").to_json
+    end
     @deleted = delete(short: shortened_url)
     content_type 'application/json'
     if not @deleted[:success]
