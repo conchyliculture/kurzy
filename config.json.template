@@ -1,4 +1,6 @@
 {
+    "domain": "localhost",
     "admin_password":"toto",
-    "bind": "0.0.0.0"
+    "bind": "0.0.0.0",
+    "private_inserts": "true"
 }
