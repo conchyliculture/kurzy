@@ -1,3 +1,4 @@
+require "digest"
 require "slim"
 require "json"
 require "securerandom"
@@ -13,17 +14,18 @@ end
 config = JSON.parse(File.read("config.json"))
 
 set :bind, config["bind"]
+set :server, :puma
+enable :sessions
+set :sessions, :expire_after => 86400 
+set :session_secret,  SecureRandom.hex(64)
+set :sessions, :domain => config["domain"]
 
-$adminpwd = config["admin_password"]
+$adminpwd = Digest::SHA512.hexdigest(config["admin_password"])
+$private_inserts = config["private_inserts"] 
 
 if not $adminpwd
   raise Exception.new("Please set admin_password in config.json")
 end
-
-use Rack::Session::Cookie,  :key => 'rack.session',
-                        :path => '/',
-                        :expire_after => 86400*2,#Inseconds
-                        :secret => SecureRandom.hex # Kills all sessions on restart, which is fine
 
 Encoding.default_external = Encoding::UTF_8
 Encoding.default_internal = Encoding::UTF_8
@@ -66,7 +68,7 @@ end
 
 def delete(short:)
     if not session[:logged]
-        return nay("You are not allowed to perform this action")
+      return nay("You are not allowed to perform this action (delete)").to_json
     end
     begin
         res = KurzyDB.delete(short: short)
@@ -134,7 +136,7 @@ end
 post '/l/login' do
     pwd = params[:password]
     if pwd
-        if pwd == $adminpwd
+        if Digest::SHA512.hexdigest(pwd) == $adminpwd
             session["logged"] = true
             content_type 'application/json'
             return yay('Successfully logged in').to_json
