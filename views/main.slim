@@ -65,25 +65,21 @@ html
                 a href="#listtab"
                   |List links
 
-      -if @logged
+      -if (@logged or not @private_inserts)
         div id="add" class="col s10"
           form action="/a" method="post" id="addform" style="margin-top:2em;"
             div class="row valign-wrapper"
-              div class="input-field col s4"
+              div class="input-field col s6"
                 label class="sr-only" for="urlfield"
                   |URL to shorten
                 input type="url" id="urlfield" placeholder="https://twitter.com" required=true
-              div class="input-field col s4"
+              div class="input-field col s6"
                 label class="sr-only" for="shorturlfield" data-error="Already in use"
                   |Custom shortened text
                 -if @short
                   input type="text" id="shorturlfield" placeholder="twitter" class="validate" value="#{@short}"
                 -else
                   input type="text" id="shorturlfield" placeholder="twitter" class="validate"
-              div class="col s4 tooltipped"  data-position="bottom" data-delay="50" data-tooltip="Whether to show the link in the list"
-                input type="checkbox" id="privatefield" checked="true"
-                label for="privatefield"
-                  |Make private?
             div class="row" id="add_result"
             div class="row"
               div class="col s4"

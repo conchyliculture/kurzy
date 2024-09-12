@@ -103,8 +103,8 @@ def get_list(max: nil)
 end
 
 post '/a/add' do
-    if not session[:logged] and $private_inserts
-      return nay("You are not allowed to perform this action").to_json
+    if ( session[:logged] or not $private_inserts )
+      return nay("You are not allowed to perform this action (add)").to_json
     end
     kurl = params['url']
     kurl_custom = params['shorturl']
@@ -161,6 +161,7 @@ get '/*' do |shortened_url|
     format = params[:format]
     if shortened_url == ""
         @logged = session[:logged]
+        @private_inserts = $private_inserts
         return slim :main
     end
 
