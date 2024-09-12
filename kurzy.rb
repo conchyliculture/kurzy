@@ -160,6 +160,7 @@ end
 get '/*' do |shortened_url|
     format = params[:format]
     if shortened_url == ""
+        @logged = session[:logged]
         return slim :main
     end
 
