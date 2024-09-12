@@ -15,17 +15,23 @@ require_relative "utils.rb"
    return JSON.parse(File.read(config_path))
  end
 
-class Kurzy < Sinatra::Application
+class Kurzy < Sinatra::Base
 
   configure do
-    config = load_config(File.join(File.expand_path(File.dirname(__FILE__), "config.json")))
+    local_dir = File.expand_path(File.dirname(__FILE__))
+    if @config_file
+      config = load_config(ENV["CONFIG_FILE"])
+    else
+      config = load_config(File.join(local_dir, "config.json"))
+    end
     set :bind, config["bind"]
     set :server, config["server"] || :puma
 
     enable :sessions
-    set :sessions, :expire_after => 86400 
+    set :sessions, :expire_after => 86400
     set :sessions, :domain => config["domain"]
     set :session_secret,  SecureRandom.hex(64)
+    set :session_store, Rack::Session::Pool
 
     set :adminpwd, Digest::SHA512.hexdigest(config["admin_password"])
     set :private_inserts, config["private_inserts"] || false
@@ -34,6 +40,11 @@ class Kurzy < Sinatra::Application
       raise Exception.new("Please set admin_password in config.json")
     end
   end
+
+  def truncate()
+    KurzyDB.truncate()
+  end
+
 
   def nay(msg)
       status 400
@@ -108,7 +119,7 @@ class Kurzy < Sinatra::Application
   end
 
   post '/a/add' do
-      if ( session[:logged] or not settings.private_inserts )
+      if (not session[:logged]) and settings.private_inserts
         return nay("You are not allowed to perform this action (add)").to_json
       end
       kurl = params['url']
@@ -121,6 +132,9 @@ class Kurzy < Sinatra::Application
   end
 
   get '/l/list' do
+      if (not session[:logged] and not settings.private_inserts )
+        return nay("You are not allowed to perform this action (list)").to_json
+      end
       @liste = get_list()
       content_type 'application/json'
       return @liste.to_json
@@ -141,11 +155,12 @@ class Kurzy < Sinatra::Application
   post '/l/login' do
       pwd = params[:password]
       if pwd
-          if Digest::SHA512.hexdigest(pwd) == $adminpwd
-              session["logged"] = true
+          if Digest::SHA512.hexdigest(pwd) == settings.adminpwd
+              session[:logged] = true
               content_type 'application/json'
               return yay('Successfully logged in').to_json
           else
+              session[:logged] = false
               content_type 'application/json'
               return nay("Bad password.").to_json
           end
@@ -187,5 +202,7 @@ class Kurzy < Sinatra::Application
       end
   end
 
-  run! if app_file == $0
+  if app_file == $0
+    run!
+  end
 end
