@@ -4,7 +4,7 @@ module KurzyDB
 
     if not Object.const_defined?(:DB)
         case ENV['RACK_ENV']
-        when "test"
+        when "unittest"
             # Make a DB in memory when testing
             DB = Sequel.sqlite
         else
