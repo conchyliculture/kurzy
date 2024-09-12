@@ -1,0 +1,4 @@
+{
+    "admin_password":"toto",
+    "bind": "0.0.0.0"
+}

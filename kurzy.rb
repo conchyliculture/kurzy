@@ -1,6 +1,3 @@
-#!/usr/bin/ruby
-# encoding: utf-8
-
 require "slim"
 require "json"
 require "securerandom"
@@ -9,9 +6,20 @@ require "sinatra"
 require_relative "db.rb"
 require_relative "utils.rb"
 
-$adminpwd = "toto"
 
-set :bind, "0.0.0.0"
+if not File.exist?("config.json")
+  raise Exception.new("Please copy config.json.template into config.json and edit it to your needs")
+end
+
+config = JSON.parse(File.read("config.json"))
+
+set :bind, config["bind"]
+
+$adminpwd = config["admin_password"]
+
+if not $adminpwd
+  raise Exception.new("Please set admin_password in config.json")
+end
 
 use Rack::Session::Cookie,  :key => 'rack.session',
                         :path => '/',
