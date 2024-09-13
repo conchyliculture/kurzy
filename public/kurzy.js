@@ -38,7 +38,6 @@ function delete_short(s) {
         dataType: "json",
         success: function (data, s) {
             Materialize.toast('Successfull deleted link', 4000);
-            load_liste();
         },
         error: function(data, s) {
             Materialize.toast('Error deleting link', 4000);

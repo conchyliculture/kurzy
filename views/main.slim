@@ -62,7 +62,7 @@ html
                 a href="#add"
                   |Insert link
               li class="tab col s3"
-                a href="#listtab"
+                a href="#listtab" onclick="load_liste()"
                   |List links
 
       -if (@logged or not @private_inserts)
@@ -100,5 +100,4 @@ html
           $('ul.tabs').tabs();
           $('.modal').modal();
           $('.tooltipped').tooltip({delay: 50});
-          load_liste();
       });
