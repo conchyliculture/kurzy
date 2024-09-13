@@ -1,6 +1,7 @@
 require "digest"
 require "slim"
 require "json"
+require "rack/utils"
 require "securerandom"
 require "sinatra/base"
 
@@ -62,7 +63,7 @@ class Kurzy < Sinatra::Base
       unless url
           return nay('I need an url')
       end
-      if "#{short}" == ""
+      if short.to_s == ""
           short = KurzyUtils.gen_hash()
       else
           short = KurzyUtils.short_filter(short)
@@ -72,7 +73,7 @@ class Kurzy < Sinatra::Base
           url = KurzyUtils.url_filter(url)
       rescue URI::InvalidURIError => e
           return nay("Bad URI")
-      rescue Exception => e
+      rescue StandardError => e
           return nay(e.message)
       end
 
@@ -157,7 +158,7 @@ class Kurzy < Sinatra::Base
   post '/l/login' do
       pwd = params[:password]
       if pwd
-          if Digest::SHA512.hexdigest(pwd) == settings.adminpwd
+          if Rack::Utils::secure_compare(Digest::SHA512.hexdigest(pwd), settings.adminpwd)
               session[:logged] = true
               content_type 'application/json'
               return yay('Successfully logged in').to_json
