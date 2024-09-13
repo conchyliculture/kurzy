@@ -83,7 +83,6 @@ function kurzy_add(e){
         data: {'url': url, 'shorturl': surl, 'privateurl': privateurl},
         success: function(res, textStatus) {
             Materialize.toast('Successfull added link', 4000);
-            load_liste();
             var link = document.location.origin+'/'+res['short'];
             $('#add_result').html('<div class="col s12">Successfully added short link <a href="'+link+'">'+link+'</a></div>');
         },
