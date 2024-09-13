@@ -24,7 +24,8 @@ class Kurzy < Sinatra::Base
     else
       config = load_config(File.join(local_dir, "config.json"))
     end
-    set :bind, config["bind"]
+    set :bind, config["bind"] || "0.0.0.0"
+    set :port, config["port"] || 4567
     set :server, config["server"] || :puma
 
     enable :sessions
