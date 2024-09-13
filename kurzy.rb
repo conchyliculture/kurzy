@@ -31,6 +31,7 @@ class Kurzy < Sinatra::Base
     enable :sessions
     set :sessions, :expire_after => (config["cookie_expire_after"] || 2 * 60)
     set :sessions, :domain => config["domain"]
+    set :sessions, :same_site => :strict
     set :session_secret,  SecureRandom.hex(64)
     set :session_store, Rack::Session::Pool
 
