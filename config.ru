@@ -1,2 +1,2 @@
 require "./kurzy"
-run Sinatra::Application
+run Kurzy
